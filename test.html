@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title></title>
+<script src="client/jquery.js"></script>
+<script src="client/base64.js"></script>
+<script src="client/des.js"></script>
+<script src="client/rfb.js"></script>
+<script src="client/vnc.js"></script>
+</head>
+<body>
+<script>
+$(document).ready(function() {
+
+	// var socket = new WebSocket("ws://localhost:8000/vnc?host=ec2-79-125-31-203.eu-west-1.compute.amazonaws.com&port=5901");
+	var socket = new WebSocket("ws://localhost:8000/vnc?host=localhost&port=5900");	
+	socket.onopen = function() {
+		$('#response').append('open<br/>');		
+	};
+	// 	// socket.onmessage = function(msg){  
+	// 	// 	$('#response').append(msg.data).append('<br/>');
+	// 	// };
+	socket.onclose = function() {
+		$('#response').append('closed<br/>');
+	};
+	// $('#message').keypress(function(event) {
+	// 	if (event.keyCode == '13') {
+	// 		event.preventDefault();
+	// 		socket.send($(this).val());
+	// 		$(this).val('');		 
+	// 	}	
+	// });
+	var client = new VNCClient(socket);
+});
+</script>
+
+<input name="message" id="message"/>
+<div id="response">
+	
+</div>
+</body>
+</html>

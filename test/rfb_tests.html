@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title></title>
+  <script src="jsUnitCore.js"></script>
+  <script src="socket.js"></script>
+  <script src="../client/base64.js"></script>
+  <script src="../client/des.js"></script>
+  <script src="../client/rfb.js"></script>
+ </head>
+ <body>
+  <script>	
+	function createProtocol(option) {
+		return RFB(option);
+	}
+	
+	function receive(protocol, messages) {
+		for(var i = 0; i < messages.length; i++) protocol.receive(messages[i]);			
+	}
+	
+	function e(clear) { return Base64.encode(clear);}
+			
+    //handshaking and protocol selection
+	function testShouldHandshakingAndChooseProtocol() {
+		var protocolVersions = {
+			"RFB 003.003\n" : [3.3, "RFB 003.003\n"],
+			"RFB 003.005\n" : [3.3, "RFB 003.003\n"],
+			"RFB 003.007\n" : [3.7, "RFB 003.007\n"],
+			"RFB 003.008\n" : [3.8, "RFB 003.008\n"],
+			"RFB 003.899\n" : [3.8, "RFB 003.008\n"]
+		}		
+		for(var message in protocolVersions) {
+			var socket = createSocket();
+			var rfb = createProtocol({socket: socket})
+			rfb.receive(Base64.encode(message));
+			assertEquals(protocolVersions[message][1], socket.messages().pop());
+			assertEquals(protocolVersions[message][0], rfb._protocol().version);						
+		}
+	}
+	
+	function testShouldAlwaysUseAVersonIfSpecified() {
+		var protocolVersions = {
+			"RFB 003.003\n" : [3.3, "RFB 003.003\n"],
+			"RFB 003.005\n" : [3.3, "RFB 003.003\n"],
+			"RFB 003.007\n" : [3.3, "RFB 003.003\n"],
+			"RFB 003.008\n" : [3.3, "RFB 003.003\n"],
+			"RFB 003.899\n" : [3.3, "RFB 003.003\n"]
+		}		
+		for(var message in protocolVersions) {
+			var socket = createSocket();
+			var rfb = createProtocol({socket: socket, password: 'password', always : 3.3});
+			rfb.receive(e(message));
+			assertEquals(protocolVersions[message][1], socket.messages().pop());
+			assertEquals(protocolVersions[message][0], rfb._protocol().version);						
+		}		
+	}	
+	
+	function testShouldSendPasswordEncryptedIfSecurityIs2For33() {
+		var socket = createSocket();
+		var rfb = createProtocol({socket: socket, password: 'password'});
+		receive(rfb, [e("RFB 003.003\n"), "AAAAAjLueuVoxbU+TR/LcMQ/1W8="]);
+		// assertEquals(DES.encrypt('password', '2îzåhÅµ>MËpÄ?Õo'), socket.messages().pop());
+	}	
+	
+	function testShouldWaitForChallengeIfSecurityIs2For33() {
+		var socket = createSocket();
+		var rfb = createProtocol({socket: socket, password: 'password'});
+		receive(rfb, [e("RFB 003.003\n"), e([0, 0, 0, 2]), e([50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111])]);
+		// assertEquals(DES.encrypt('password', '2îzåhÅµ>MËpÄ?Õo'), socket.messages().pop());
+	}	
+  </script>
+ </body>
+</html>
