@@ -1,35 +1,34 @@
 var RFB = (function(base64, des) {
 	return function(options) {
 	var socket = options.socket, password = options.password, always = options.always, client = options.client;
-			
-	var Protocol33 = (function() {		
-		function ContentBuffer() {
-			this.bytes = new Array();
-			this.append = function(data) { this.bytes = this.bytes.concat(data);};
-			this.read = function(count) { return this.bytes.splice(0, count);};
-			this.readString = function(count) {
-				var read = this.bytes.splice(0, count), result = [];
-				for (var i = 0; i < count; i++) result.push(String.fromCharCode(read[i]));	
-				return result.join('');
-			};
-			this.unpack32 = function() {				
-				var data = this.read(4);
-				return (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
-			};
-			this.unpack16 = function() {
-				var data = this.read(2);
-				return (data[0] << 8) + data[1];
-			};
-			this.unpack8 = function() {
-				return this.read(1)[0];
-			};
-			this.unpack = function(n) {
-				var result = 0, data = this.read(n);
-				for (var i = 0; i < n ; i ++) result += data[i] << ((n - i - 1) * 8);
-				return result;
-			}
+	function MessageQueue() {
+		this.bytes = new Array();
+		this.append = function(data) { this.bytes = this.bytes.concat(data);};
+		this.read = function(count) { return this.bytes.splice(0, count);};
+		this.readString = function(count) {
+			var read = this.bytes.splice(0, count), result = [];
+			for (var i = 0; i < count; i++) result.push(String.fromCharCode(read[i]));	
+			return result.join('');
+		};
+		this.unpack32 = function() {				
+			var data = this.read(4);
+			return (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
+		};
+		this.unpack16 = function() {
+			var data = this.read(2);
+			return (data[0] << 8) + data[1];
+		};
+		this.unpack8 = function() {
+			return this.read(1)[0];
+		};
+		this.unpack = function(n) {
+			var result = 0, data = this.read(n);
+			for (var i = 0; i < n ; i ++) result += data[i] << ((n - i - 1) * 8);
+			return result;
 		}
-		
+	}		
+			
+	var Protocol33 = (function() {						
 		function toAscii(data) { var ascii = []; for (var i = 0; i < data.length; i++) ascii[i] = String.fromCharCode(data[i]);return ascii.join('');}
 
 		function clientMessage() {
@@ -83,10 +82,8 @@ var RFB = (function(base64, des) {
 			}
 		};
 		protocol.waitForContent = function(bytes, handler) {
-			var buffer = new ContentBuffer();
 			return function(data) {
-				buffer.append(data.bytes);
-				if (buffer.bytes.length >= bytes) { return handler(buffer); }
+				if (data.bytes.length >= bytes) { return handler(data); }
 			};
 		};
 		protocol.framebufferUpdate = function(numberOfRectangles, pixelFormat) {
@@ -104,13 +101,13 @@ var RFB = (function(base64, des) {
 				var bytesPerPixel = pixelFormat.bitsPerPixel / 8;
 				if (encoding == 0) {
 					var index = [0, 1, 2, 3];
+					var pixels = data.read(width * height * bytesPerPixel);
 					for (var i=0, j=0; i < (width * height * bytesPerPixel); i+=bytesPerPixel, j+=bytesPerPixel) {
-				        rectangle.data[i + 0] = data.bytes[j + index[0]];
-				        rectangle.data[i + 1] = data.bytes[j + index[1]];
-				        rectangle.data[i + 2] = data.bytes[j + index[2]];
-				        rectangle.data[i + 3] = data.bytes[j + index[3]];
+				        rectangle.data[i + 0] = pixels[j + index[0]];
+				        rectangle.data[i + 1] = pixels[j + index[1]];
+				        rectangle.data[i + 2] = pixels[j + index[2]];
+				        rectangle.data[i + 3] = pixels[j + index[3]];
 				    }
-					data.bytes.slice(width * height * bytesPerPixel);
 				}
 				client.onRectangle(x, y, rectangle);
 				return protocol.framebufferUpdate(num, pixelFormat)(data);
@@ -173,7 +170,7 @@ var RFB = (function(base64, des) {
 		return rfb.protocol.security;
 	};			
 	
-	var handler = protocolVersion;
-	rfb.receive = function(data) {var next = handler(base64.decode(data)); if (next) handler = next;}
+	var handler = protocolVersion, queue = new MessageQueue();
+	rfb.receive = function(data) {queue.append(base64.decode(data).bytes); var next = handler(queue); if (next) handler = next;}
 	return rfb;
 }})(Base64, DES);
