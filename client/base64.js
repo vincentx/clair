@@ -64,7 +64,14 @@ var Base64 = {
 			},
 			unpack32: function() {				
 				var data = this.read(4);
-				return (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3]
+				return (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
+			},
+			unpack16: function() {
+				var data = this.read(2);
+				return (data[0] << 8) + data[1];
+			},
+			unpack8: function() {
+				return this.read(1)[0];
 			}			
 		}
 		 

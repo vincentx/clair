@@ -38,10 +38,10 @@
 		}		
 		for(var message in protocolVersions) {
 			var socket = createSocket();
-			var rfb = createProtocol({socket: socket})
+			var rfb = createProtocol({socket: socket});			
 			rfb.receive(Base64.encode(message));
 			assertEquals(protocolVersions[message][1], socket.messages().pop());
-			assertEquals(protocolVersions[message][0], rfb._protocol().version);						
+			assertEquals(protocolVersions[message][0], rfb.protocol.version);						
 		}
 	}
 	
@@ -58,7 +58,7 @@
 			var rfb = createProtocol({socket: socket, password: 'password', always : 3.3});
 			rfb.receive(e(message));
 			assertEquals(protocolVersions[message][1], socket.messages().pop());
-			assertEquals(protocolVersions[message][0], rfb._protocol().version);						
+			assertEquals(protocolVersions[message][0], rfb.protocol.version);						
 		}		
 	}	
 	
@@ -77,10 +77,25 @@
 	}
 	
 	function testShouldCallCanvasInitAccrodingToServerInit() {
+		var _name, _width, _height, _format;
 		var socket = createSocket();
-		var rfb = createProtocol({socket: socket, password: 'password', onCanvasInit: function(width, height) {
-			
-		}});
+		var rfb = createProtocol({socket: socket, password: 'password', client: {onServerInit: function(name, width, height, pixelFormat) {	
+			_name = name, _width = width, _height = height, _format = pixelFormat;
+		}}});		
+		receive(rfb, [e("RFB 003.003\n"), e([0, 0, 0, 2]), e([50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111]), e([0, 0, 0, 0]), "BaADhCAgAAEA/wD/AP8QCAAAAAAAAAAYVmluY2VudCBYdSdzIE1hY0Jvb2sgUHJv"]);
+		assertEquals("Vincent Xu's MacBook Pro", _name);
+		assertEquals(1440, _width);
+		assertEquals(900, _height);	
+		assertEquals(32, _format.bitsPerPixel);
+		assertEquals(32, _format.depth);
+		assertEquals(false, _format.bigEndian);
+		assertEquals(true, _format.trueColor);
+		assertEquals(255, _format.redMax);
+		assertEquals(255, _format.greenMax);	
+		assertEquals(255, _format.blueMax);	
+		assertEquals(16, _format.redShift);
+		assertEquals(8, _format.greenShift);	
+		assertEquals(0, _format.blueShift);			
 	}
   </script>
  </body>

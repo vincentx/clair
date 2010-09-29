@@ -1,6 +1,6 @@
 var RFB = (function(base64, des) {
 	return function(options) {
-	var socket = options.socket, password = options.password, always = options.always;
+	var socket = options.socket, password = options.password, always = options.always, client = options.client;
 	
 	function toAscii(data) {
 		var ascii = [];
@@ -10,6 +10,21 @@ var RFB = (function(base64, des) {
 	
 	function sendAuthentication(password, challenge) { socket.send(toAscii(des.encrypt(password, challenge))); }
 	function sendClientInit(shared) { socket.send(shared ? "\1" : "\0"); }
+	function parsePixelFormat(data) {
+		return {
+			bitsPerPixel : data.unpack8(),
+			depth : data.unpack8(),
+			bigEndian : data.unpack8() != 0,
+			trueColor : data.unpack8() != 0,
+			redMax : data.unpack16(),
+			greenMax : data.unpack16(),
+			blueMax : data.unpack16(),
+			redShift : data.unpack8(),
+			greenShift : data.unpack8(),
+			blueShift : data.unpack8(),
+			padding: data.read(3)
+		};		
+	}
 		
 	var Protocol33 = (function() {
 		var protocol = {};
@@ -33,10 +48,28 @@ var RFB = (function(base64, des) {
 			// TODO auth fail					
 		};
 		protocol.serverInit = function(data) {
-												
+			var width = data.unpack16(), height = data.unpack16();
+			var pixelFormat = parsePixelFormat(data);
+			var nameLength = data.unpack32(), name = data.readString(nameLength);
+			client.onServerInit(name, width, height, pixelFormat);
 		};
-		protocol.serverToClient = function(data) {
-						
+		protocol.setPixelFormat = function() {
+			
+		};
+		protocol.setEncodings = function() {
+			
+		};
+		protocol.framebufferUpdateRequest = function() {
+			
+		};
+		protocol.keyEvent = function() {
+			
+		};
+		protocol.pointerEvent = function() {
+			
+		};
+		protocol.clientCutText = function() {
+			
 		};
 		return protocol;				
 	}());		
@@ -56,35 +89,28 @@ var RFB = (function(base64, des) {
 		protocol.version = 3.8;
 		return protocol;	
 	}());
-			
-	var protocol = null;
 	
+	var rfb = {};	
+	rfb.protocol = null;
 	var protocolVersion = function(data) {
 		var version = data.readString(12);
 		var major = version.substr(4, 3), minor = version.substr(8, 3);
 		var serverVersion = parseFloat(parseFloat(major) + "." + parseFloat(minor));
 		if (always && serverVersion >= always) serverVersion = always;
 		if (serverVersion >= 3.8) {
-			protocol = Protocol38;			
+			rfb.protocol = Protocol38;			
 			socket.send('RFB 003.008\n');
 		} else if (serverVersion >= 3.7) {
-			protocol = Protocol37;			
+			rfb.protocol = Protocol37;			
 			socket.send('RFB 003.007\n');
 		} else if (serverVersion >= 3.3) {
-			protocol = Protocol33;			
+			rfb.protocol = Protocol33;			
 			socket.send('RFB 003.003\n');
-		}		
-		return protocol.security;		
+		}	
+		return rfb.protocol.security;
 	};	
 	
 	var handler = protocolVersion;
-			
-	function receive(data) {
-		handler = handler(base64.decode(data));
-	}
-		
-	return { 
-		receive : receive,
-		_protocol : function() { return protocol;} 
-	};
+	rfb.receive = function(data) { handler = handler(base64.decode(data));}		
+	return rfb;
 }})(Base64, DES);
