@@ -4,19 +4,14 @@ var server = ws.createServer();
 server.addListener('connection', function(connection) {
   var request = url.parse(connection._req.url, true);
   var socket = net.createConnection(request.query.port, request.query.host);
-  var length = 0;
   socket.setEncoding('base64');
   socket.addListener('data', function(data) {
-	length += data.length;
 	connection.send(data);
-	sys.log("receive: " + data + " length: " + data.length);	
-	sys.log("total: " + length);	
   });
   connection.addListener('message', function(message) {
 	var bytes = new Buffer(message.length);
 	for (var i = 0; i < message.length ; i++) bytes[i] = message.charCodeAt(i);	
 	socket.write(bytes);
-	sys.log("send: " + message + " length: " + message.length);
   });
   connection.addListener('close', function() {
 	// socket.close();	

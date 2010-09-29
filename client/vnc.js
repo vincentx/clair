@@ -5,7 +5,12 @@ var VNCClient = function(socket, canvas) {
 	client.onServerInit = function(name, width, height, pixelFormat) {
 		canvas.width = width; canvas.height = height; context = canvas.getContext("2d");
 		rfb.protocol.framebufferUpdateRequest(false, 0, 0, width, height);
-
+		
+		var flush = function() {
+			rfb.protocol.framebufferUpdateRequest(true, 0, 0, width, height);
+			setTimeout(flush, 50);			
+		}
+		setTimeout(flush, 50);			
 	};
 		
 	client.createRectangle = function(width, height) {
