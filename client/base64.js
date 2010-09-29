@@ -47,54 +47,22 @@ var Base64 = {
  
 	// public method for decoding
 	decode : function (input) {
-		var chr1, chr2, chr3;
 		var enc1, enc2, enc3, enc4;
-		var i = 0;
+		var i = 0, bytes = [];
  
-		input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
-		var result = {
-			bytes: new Array(),
-			read : function(count) {
-				return this.bytes.splice(0, count);
-			},
-			readString : function(count) {
-				var read = this.bytes.splice(0, count), result = [];
-				for (var i = 0; i < count; i++) result.push(String.fromCharCode(read[i]));	
-				return result.join('');
-			},
-			unpack32: function() {				
-				var data = this.read(4);
-				return (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
-			},
-			unpack16: function() {
-				var data = this.read(2);
-				return (data[0] << 8) + data[1];
-			},
-			unpack8: function() {
-				return this.read(1)[0];
-			},
-			unpack: function(n) {
-				var result = 0, data = this.read(n);
-				for (var i = 0; i < n ; i ++) result += data[i] << ((n - i - 1) * 8);
-				return result;
-			}			
-		}
+		input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");		
 		 
 		while (i < input.length) {
 			enc1 = this._keyStr.indexOf(input.charAt(i++));
 			enc2 = this._keyStr.indexOf(input.charAt(i++));
 			enc3 = this._keyStr.indexOf(input.charAt(i++));
 			enc4 = this._keyStr.indexOf(input.charAt(i++));
- 
-			chr1 = (enc1 << 2) | (enc2 >> 4);
-			chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
-			chr3 = ((enc3 & 3) << 6) | enc4;
- 
-			result.bytes.push(chr1); 
-			if (enc3 != 64) result.bytes.push(chr2);
-			if (enc4 != 64) result.bytes.push(chr3);
+  
+			bytes.push((enc1 << 2) | (enc2 >> 4)); 
+			if (enc3 != 64) bytes.push(((enc2 & 15) << 4) | (enc3 >> 2));
+			if (enc4 != 64) bytes.push(((enc3 & 3) << 6) | enc4);
 		}
-		return result;
+		return bytes;
 	},
  
 	// private method for UTF-8 encoding

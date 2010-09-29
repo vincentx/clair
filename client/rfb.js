@@ -171,6 +171,6 @@ var RFB = (function(base64, des) {
 	};			
 	
 	var handler = protocolVersion, queue = new MessageQueue();
-	rfb.receive = function(data) {queue.append(base64.decode(data).bytes); var next = handler(queue); if (next) handler = next;}
+	rfb.receive = function(data) { queue.append(base64.decode(data)); var next = handler(queue); if (next) handler = next; }
 	return rfb;
 }})(Base64, DES);
