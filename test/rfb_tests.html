@@ -124,7 +124,7 @@
 	function testShouldWaitAllContentForSingleRectangleFramebufferUpdate() {
 		var rectangle = {}, _x, _y;
 		var socket = createSocket();
-		var rfb = createProtocol({socket: socket, password: 'password', client: {onServerInit: function(name, width, height, pixelFormat) {},createRectangle : function(width, height) { rectangle.data = new Array(width * height * 4); return rectangle;}, onRectangle: function(x, y, rectangle) { _x = x; _y = y}}});
+		var rfb = createProtocol({socket: socket, password: 'password', client: {onServerInit: function(name, width, height, pixelFormat) {},createRectangle : function(width, height) { rectangle.data = new Array(width * height * 4); return rectangle;}, drawRectangle: function(x, y, rectangle) { _x = x; _y = y}}});
 		receive(rfb, [e("RFB 003.003\n"), e([0, 0, 0, 2]), e([50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111]), e([0, 0, 0, 0]), "BaADhCAgAAEA/wD/AP8QCAAAAAAAAAAYVmluY2VudCBYdSdzIE1hY0Jvb2sgUHJv", e([0,0,0,1, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0,0]), e([1,1,1,1,1,1,1,1]), e([1,1,1,1,1,1,1,1])]);
 		assertEquals(16, rectangle.data.length);
 		assertEquals([1,1,1,255,1,1,1,255,1,1,1,255,1,1,1,255].join(':'), rectangle.data.join(':'));
@@ -133,7 +133,7 @@
 	function testShouldContiuneHandleFramebufferUpdate() {
 		var rectangle = {}, _x, _y;
 		var socket = createSocket();
-		var rfb = createProtocol({socket: socket, password: 'password', client: {onServerInit: function(name, width, height, pixelFormat) {},createRectangle : function(width, height) { rectangle.data = new Array(width * height * 4); return rectangle;}, onRectangle: function(x, y, rectangle) { _x = x; _y = y}}});
+		var rfb = createProtocol({socket: socket, password: 'password', client: {onServerInit: function(name, width, height, pixelFormat) {},createRectangle : function(width, height) { rectangle.data = new Array(width * height * 4); return rectangle;}, drawRectangle: function(x, y, rectangle) { _x = x; _y = y}}});
 		receive(rfb, [e("RFB 003.003\n"), e([0, 0, 0, 2]), e([50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111]), e([0, 0, 0, 0]), "BaADhCAgAAEA/wD/AP8QCAAAAAAAAAAYVmluY2VudCBYdSdzIE1hY0Jvb2sgUHJv", e([0,0,0,1, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0,0]), e([1,1,1,1,1,1,1,1]), e([1,1,1,1,1,1,1,1]), e([0,0,0,1, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0,0]), e([2,2,2,2,2,2,2,2]), e([2,2,2,2,2,2,2,2])]);
 		assertEquals(16, rectangle.data.length);
 		assertEquals([2,2,2,255,2,2,2,255,2,2,2,255,2,2,2,255].join(':'), rectangle.data.join(':'));		
@@ -142,10 +142,19 @@
 	function testShouldContiuneHandleFramebufferUpdateIfServerThenTogether() {
 		var rectangle = {}, _x, _y;
 		var socket = createSocket();
-		var rfb = createProtocol({socket: socket, password: 'password', client: {onServerInit: function(name, width, height, pixelFormat) {},createRectangle : function(width, height) { rectangle.data = new Array(width * height * 4); return rectangle;}, onRectangle: function(x, y, rectangle) { _x = x; _y = y}}});
+		var rfb = createProtocol({socket: socket, password: 'password', client: {onServerInit: function(name, width, height, pixelFormat) {},createRectangle : function(width, height) { rectangle.data = new Array(width * height * 4); return rectangle;}, drawRectangle: function(x, y, rectangle) { _x = x; _y = y}}});
 		receive(rfb, [e("RFB 003.003\n"), e([0, 0, 0, 2]), e([50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111]), e([0, 0, 0, 0]), "BaADhCAgAAEA/wD/AP8QCAAAAAAAAAAYVmluY2VudCBYdSdzIE1hY0Jvb2sgUHJv", e([0,0,0,1, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0,0]), e([1,1,1,1,1,1,1,1]), e([1,1,1,1,1,1,1,1, 0,0,0,1, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0,0]), e([2,2,2,2,2,2,2,2]), e([2,2,2,2,2,2,2,2])]);
 		assertEquals(16, rectangle.data.length);
 		assertEquals([2,2,2,255,2,2,2,255,2,2,2,255,2,2,2,255].join(':'), rectangle.data.join(':'));		
+	}
+	
+	function testShouldSendSetEncodingsRequest() {
+		var rectangle = {}, _x, _y;
+		var socket = createSocket();
+		var rfb = createProtocol({socket: socket, password: 'password', client: {onServerInit: function(name, width, height, pixelFormat) {},createRectangle : function(width, height) { rectangle.data = new Array(width * height * 4); return rectangle;}, drawRectangle: function(x, y, rectangle) { _x = x; _y = y}}});
+		receive(rfb, [e("RFB 003.003\n")]);
+		rfb.protocol.setEncodings();
+		assertEquals(toAscii([2, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0]), socket.messages().pop());
 	}
   </script>
  </body>

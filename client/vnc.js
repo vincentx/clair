@@ -4,6 +4,7 @@ var VNCClient = function(socket, canvas) {
 	
 	client.onServerInit = function(name, width, height, pixelFormat) {
 		canvas.width = width; canvas.height = height; context = canvas.getContext("2d");
+		rfb.protocol.setEncodings();
 		rfb.protocol.framebufferUpdateRequest(false, 0, 0, width, height);
 		
 		var flush = function() {
@@ -17,8 +18,12 @@ var VNCClient = function(socket, canvas) {
 		return context.createImageData(width, height);
 	}
 	
-	client.onRectangle = function(x, y, rectangle) {
+	client.drawRectangle = function(x, y, rectangle) {
 		context.putImageData(rectangle, x, y);
+	}
+	
+	client.copyRectangle = function(srcX, srcY, x, y, width, heihgt) {
+		context.drawImage(canvas, srcX, srcY, widhth, height, x, y, width, height);
 	}
 			
 	socket.onmessage = function(event) {

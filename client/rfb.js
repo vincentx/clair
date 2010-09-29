@@ -19,6 +19,7 @@ var RFB = (function(base64, des) {
 	function ClientMessage() {
 		var data = [];
 		this.pack8  = function (num) { data.push(num & 0xFF); return this;};
+		this.padding8  = function () { data.push(0 & 0xFF); return this;};
 		this.pack16 = function (num) { data.push((num >> 8) & 0xFF, (num) & 0xFF); return this;};
 		this.pack32 = function (num) { data.push((num >> 24) & 0xFF, (num >> 16) & 0xFF, (num >>  8) & 0xFF, (num) & 0xFF); return this;};
 		this.send = function() {socket.send(toAscii(data));};
@@ -86,10 +87,8 @@ var RFB = (function(base64, des) {
 			}						
 		};
 		protocol.updateRectangle = function(x, y, width, height,encoding, pixelFormat, num) {
-			return function(data) {
-				var rectangle = client.createRectangle(width, height);
-				protocol.encoding[encoding.toString()](data, x, y, width, height, pixelFormat, rectangle);
-				client.onRectangle(x, y, rectangle);
+			return function(data) {				
+				protocol.encoding[encoding.toString()](data, x, y, width, height, pixelFormat);			
 				return protocol.framebufferUpdate(num, pixelFormat)(data);
 			}
 		}
@@ -97,7 +96,7 @@ var RFB = (function(base64, des) {
 			
 		};
 		protocol.setEncodings = function() {
-			
+			new ClientMessage().pack8(2).padding8().pack16(2).pack32(1).pack32(0).send();			
 		};
 		protocol.framebufferUpdateRequest = function(incremental, x, y, width, height) {
 			new ClientMessage().pack8(3).pack8(incremental ? 1 : 0).pack16(x).pack16(y).pack16(width).pack16(height).send();
@@ -113,7 +112,8 @@ var RFB = (function(base64, des) {
 		};
 		
 		protocol.encoding = {};	
-		protocol.encoding.raw = function(data, x, y, width, height, pixelFormat, rectangle) {
+		protocol.encoding.raw = function(data, x, y, width, height, pixelFormat) {
+			var rectangle = client.createRectangle(width, height);
 			var bytesPerPixel = pixelFormat.bitsPerPixel / 8, numberOfPixels = width * height * bytesPerPixel, pixels = data.read(numberOfPixels);
 			function unpack(index, n, backwards) { var result = 0; for (var i = 0; i < n ; i ++) result += pixels[index + i] << ((backwards ? i : (n - i - 1)) * 8); return result;}
 			for (var i=0, j=0; i < numberOfPixels; i+=4, j+=bytesPerPixel) {
@@ -122,9 +122,15 @@ var RFB = (function(base64, des) {
 		        rectangle.data[i + 1] = colors.green;
 		        rectangle.data[i + 2] = colors.blue;
 		        rectangle.data[i + 3] = 255;
-		    }									
+		    }	
+			client.drawRectangle(x, y, rectangle);								
 		}
+		protocol.encoding.copyrect = function(data, x, y, width, height, pixelFormat) {
+			var srcX = data.unpack16(), srcY = data.unpack16();
+			client.copyRectangle(srcX, srcY, x, y, width, height);
+		}		
 		protocol.encoding['0'] = protocol.encoding.raw;
+		protocol.encoding['1'] = protocol.encoding.copyrect;
 		//TODO others
 		return protocol;				
 	}());		

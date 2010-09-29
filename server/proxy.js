@@ -7,11 +7,13 @@ server.addListener('connection', function(connection) {
   socket.setEncoding('base64');
   socket.addListener('data', function(data) {
 	connection.send(data);
+	sys.log("receive: " + data + " length: " + data.length);	
   });
   connection.addListener('message', function(message) {
 	var bytes = new Buffer(message.length);
 	for (var i = 0; i < message.length ; i++) bytes[i] = message.charCodeAt(i);	
 	socket.write(bytes);
+	sys.log("send: " + message + " length: " + message.length);
   });
   connection.addListener('close', function() {
 	// socket.close();	
