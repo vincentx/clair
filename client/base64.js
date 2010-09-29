@@ -72,6 +72,11 @@ var Base64 = {
 			},
 			unpack8: function() {
 				return this.read(1)[0];
+			},
+			unpack: function(n) {
+				var result = 0, data = this.read(n);
+				for (var i = 0; i < n ; i ++) result += data[i] << ((n - i - 1) * 8);
+				return result;
 			}			
 		}
 		 

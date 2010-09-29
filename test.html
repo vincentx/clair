@@ -30,13 +30,53 @@ $(document).ready(function() {
 	// 		$(this).val('');		 
 	// 	}	
 	// });
-	var client = new VNCClient(socket);
+	var client = new VNCClient(socket, document.getElementById("vnc-viewer"));
 });
 </script>
 
-<input name="message" id="message"/>
 <div id="response">
 	
 </div>
+
+<canvas id="vnc-viewer">	
+</canvas>  
+
+<!-- <canvas id="canvas1" width="1440", height="64">
+Random Canvas
+</canvas>
+
+<script type="text/javascript">
+function setPixel(imageData, x, y, r, g, b, a) {
+    index = (x + y * imageData.width) * 4;
+    imageData.data[index+0] = r;
+    imageData.data[index+1] = g;
+    imageData.data[index+2] = b;
+    imageData.data[index+3] = a;
+}
+
+element = document.getElementById("canvas1");
+c = element.getContext("2d");
+
+// read the width and height of the canvas
+width = 1440;
+height = 64;
+
+// create a new pixel array
+imageData = c.createImageData(width, height);
+
+// draw random dots
+for (i = 0; i < 10000; i++) {
+    x = parseInt(Math.random() * width);
+    y = parseInt(Math.random() * height);
+    r = parseInt(Math.random() * 256);
+    g = parseInt(Math.random() * 256);
+    b = parseInt(Math.random() * 256);
+    setPixel(imageData, x, y, r, g, b, 0xff); // 0xff opaque
+}
+
+// copy the image data back onto the canvas
+c.putImageData(imageData, 0, 0); // at coords 0,0 -->
+
+</script>
 </body>
 </html>

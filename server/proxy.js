@@ -7,7 +7,7 @@ server.addListener('connection', function(connection) {
   socket.setEncoding('base64');
   socket.addListener('data', function(data) {
 	connection.send(data);
-	sys.log("receive: " + data);	
+	sys.log("receive: " + data + " length: " + data.length);	
   });
   connection.addListener('message', function(message) {
 	var bytes = new Buffer(message.length);
