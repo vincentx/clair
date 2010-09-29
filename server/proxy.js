@@ -10,8 +10,10 @@ server.addListener('connection', function(connection) {
 	sys.log("receive: " + data);	
   });
   connection.addListener('message', function(message) {
-	socket.write(message);	
-	sys.log("send: " + message + " length: " + message.length);		
+	var bytes = new Buffer(message.length);
+	for (var i = 0; i < message.length ; i++) bytes[i] = message.charCodeAt(i);	
+	socket.write(bytes);
+	sys.log("send: " + message + " length: " + message.length);
   });
   connection.addListener('close', function() {
 	// socket.close();	

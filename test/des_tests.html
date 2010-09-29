@@ -21,11 +21,8 @@
 	
 	function testEncrypt() {
 		var challenge = e([229,171,139,128,206,177,229,212,032,069,098,194,140,090,076,082]);
-		var response = DES.encrypt('p@55w0rd', e([229,171,139,128,206,177,229,212,032,069,098,194,140,090,076,082]));
-		alert(d(response).join(':'));
-		// var response = DES.encrypt('p@55w0rd', e([229,171,139,128,206,177,229,212,032,069,098,194,140,090,076,082]));
-		// alert(response);
-		// alert(d(response).join(':'));
+		var response = DES.encrypt('p@55w0rd', [229,171,139,128,206,177,229,212,32,69,98,194,140, 90,76,82]);
+		assertEquals([39,240,140,29,253,251,130,42,209,26,237,220,102,22,113,156].join(':'), response.join(':'));
 	}
   </script>
  </body>

@@ -19,6 +19,13 @@
 	}
 	
 	function e(clear) { return Base64.encode(clear);}
+	
+	function toAscii(data) {
+		var ascii = [];
+		for (var i = 0; i < data.length; i++) ascii[i] = String.fromCharCode(data[i]);
+		return ascii.join('');
+	}
+	
 			
     //handshaking and protocol selection
 	function testShouldHandshakingAndChooseProtocol() {
@@ -55,19 +62,26 @@
 		}		
 	}	
 	
-	function testShouldSendPasswordEncryptedIfSecurityIs2For33() {
-		var socket = createSocket();
-		var rfb = createProtocol({socket: socket, password: 'password'});
-		receive(rfb, [e("RFB 003.003\n"), "AAAAAjLueuVoxbU+TR/LcMQ/1W8="]);
-		// assertEquals(DES.encrypt('password', '2îzåhÅµ>MËpÄ?Õo'), socket.messages().pop());
-	}	
-	
 	function testShouldWaitForChallengeIfSecurityIs2For33() {
 		var socket = createSocket();
 		var rfb = createProtocol({socket: socket, password: 'password'});
 		receive(rfb, [e("RFB 003.003\n"), e([0, 0, 0, 2]), e([50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111])]);
-		// assertEquals(DES.encrypt('password', '2îzåhÅµ>MËpÄ?Õo'), socket.messages().pop());
+		assertEquals(toAscii(DES.encrypt('password', [50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111])), socket.messages().pop());
 	}	
+	
+	function testShouldSendClientInitIfAuthOk() {
+		var socket = createSocket();
+		var rfb = createProtocol({socket: socket, password: 'password'});
+		receive(rfb, [e("RFB 003.003\n"), e([0, 0, 0, 2]), e([50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111]), e([0, 0, 0, 0])]);
+		assertEquals('\1', socket.messages().pop());		
+	}
+	
+	function testShouldCallCanvasInitAccrodingToServerInit() {
+		var socket = createSocket();
+		var rfb = createProtocol({socket: socket, password: 'password', onCanvasInit: function(width, height) {
+			
+		}});
+	}
   </script>
  </body>
 </html>
