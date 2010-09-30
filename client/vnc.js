@@ -1,6 +1,6 @@
 var VNCClient = function(socket, canvas) {
 	var client = {}, context = null;
-	var rfb = RFB({socket: socket, password: 'p@55w0rd', always: 3.3, client: client});	
+	var rfb = RFB({socket: socket, password: '', always: 3.3, client: client});	
 	
 	client.onServerInit = function(name, width, height, pixelFormat) {
 		canvas.width = width; canvas.height = height; context = canvas.getContext("2d");

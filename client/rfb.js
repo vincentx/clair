@@ -87,9 +87,8 @@ var RFB = (function(base64, des) {
 			}						
 		};
 		protocol.updateRectangle = function(x, y, width, height,encoding, pixelFormat, num) {
-			return function(data) {				
-				protocol.encoding[encoding.toString()](data, x, y, width, height, pixelFormat);			
-				return protocol.framebufferUpdate(num, pixelFormat)(data);
+			return function(data) {		
+				return protocol.encoding[encoding.toString()](data, x, y, width, height, pixelFormat, protocol.framebufferUpdate(num, pixelFormat));
 			}
 		}
 		protocol.setPixelFormat = function() {
@@ -112,7 +111,7 @@ var RFB = (function(base64, des) {
 		};
 		
 		protocol.encoding = {};	
-		protocol.encoding.raw = function(data, x, y, width, height, pixelFormat) {
+		protocol.encoding.raw = function(data, x, y, width, height, pixelFormat, next) {
 			var rectangle = client.createRectangle(width, height);
 			var bytesPerPixel = pixelFormat.bitsPerPixel / 8, numberOfPixels = width * height * bytesPerPixel, pixels = data.read(numberOfPixels);
 			function unpack(index, n, backwards) { var result = 0; for (var i = 0; i < n ; i ++) result += pixels[index + i] << ((backwards ? i : (n - i - 1)) * 8); return result;}
@@ -124,13 +123,22 @@ var RFB = (function(base64, des) {
 		        rectangle.data[i + 3] = 255;
 		    }	
 			client.drawRectangle(x, y, rectangle);								
+			return next(data);
 		}
-		protocol.encoding.copyrect = function(data, x, y, width, height, pixelFormat) {
+		protocol.encoding.copyrect = function(data, x, y, width, height, pixelFormat, next) {
 			var srcX = data.unpack16(), srcY = data.unpack16();
 			client.copyRectangle(srcX, srcY, x, y, width, height);
-		}		
+			return next(data);
+		}
+		protocol.encoding.hextile = function(data, x, y, width, height, pixelFormat, next) {
+			var totalTiles = Math.ceil(width/16) * Math.ceil(height/16);
+			
+			// 
+			// var subencodingMask = data.unpack8(), 
+		}
 		protocol.encoding['0'] = protocol.encoding.raw;
 		protocol.encoding['1'] = protocol.encoding.copyrect;
+		protocol.encoding['5'] = protocol.encoding.hextile;
 		//TODO others
 		return protocol;				
 	}());		

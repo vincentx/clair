@@ -12,8 +12,8 @@
 <script>
 $(document).ready(function() {
 
-	// var socket = new WebSocket("ws://localhost:8000/vnc?host=ec2-79-125-31-203.eu-west-1.compute.amazonaws.com&port=5901");
-	var socket = new WebSocket("ws://localhost:8000/vnc?host=localhost&port=5900");	
+	var socket = new WebSocket("ws://localhost:8000/vnc?host=ec2-79-125-31-203.eu-west-1.compute.amazonaws.com&port=5901");
+	// var socket = new WebSocket("ws://localhost:8000/vnc?host=localhost&port=5900");	
 	socket.onopen = function() {
 		$('#response').append('open<br/>');		
 	};
