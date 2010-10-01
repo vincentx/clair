@@ -116,7 +116,7 @@ var RFB = (function(base64, des) {
 			var bytesPerPixel = pixelFormat.bitsPerPixel / 8, numberOfPixels = width * height * bytesPerPixel, pixels = data.read(numberOfPixels);
 			function unpack(index, n, backwards) { var result = 0; for (var i = 0; i < n ; i ++) result += pixels[index + i] << ((backwards ? i : (n - i - 1)) * 8); return result;}
 			for (var i=0, j=0; i < numberOfPixels; i+=4, j+=bytesPerPixel) {
-				var colors = pixelFormat.getColors(unpack(j, bytesPerPixel, !pixelFormat.bigEndian));
+				var colors = pixelFormat.getColors(unpack(j, 2, !pixelFormat.bigEndian));
 		        rectangle.data[i + 0] = colors.red;
 		        rectangle.data[i + 1] = colors.green;
 		        rectangle.data[i + 2] = colors.blue;

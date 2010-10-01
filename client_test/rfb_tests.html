@@ -20,6 +20,8 @@
 	
 	function e(clear) { return Base64.encode(clear);}
 	
+	function d(text) { alert(Base64.decode(text));}
+	
 	function toAscii(data) {
 		var ascii = [];
 		for (var i = 0; i < data.length; i++) ascii[i] = String.fromCharCode(data[i]);

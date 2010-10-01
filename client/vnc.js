@@ -1,6 +1,6 @@
 var VNCClient = function(socket, canvas) {
 	var client = {}, context = null;
-	var rfb = RFB({socket: socket, password: '', always: 3.3, client: client});	
+	var rfb = RFB({socket: socket, password: '3mapw9$n', always: 3.3, client: client});	
 	
 	client.onServerInit = function(name, width, height, pixelFormat) {
 		canvas.width = width; canvas.height = height; context = canvas.getContext("2d");
@@ -9,9 +9,9 @@ var VNCClient = function(socket, canvas) {
 		
 		var flush = function() {
 			rfb.protocol.framebufferUpdateRequest(true, 0, 0, width, height);
-			setTimeout(flush, 50);			
+			setTimeout(flush, 5);			
 		}
-		setTimeout(flush, 50);			
+		setTimeout(flush, 5);			
 	};
 		
 	client.createRectangle = function(width, height) {
