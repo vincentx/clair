@@ -1,4 +1,4 @@
-require.paths.unshift('../lib', '../lib/server');
+require.paths.unshift('../../lib', '../../lib/clair');
 var sys = require('sys'), vnc = require('vnc.js');
 var vows = require('vows'), assert = require('assert');
 
