@@ -77,7 +77,25 @@ vows.describe('Framebuffer Update').addBatch({
 		assert.equal(_height, 2);
 		assert.equal(_pixels.length, 16);
 		assert.equal(_pixels.toString(), '\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1');
-	}
+	},
+	'should handle multi framebuffer updates' : function() {
+		var client = afterHandshake(), _x, _y, _width, _height, _pixels;
+		client.on('rawEncoding', function(x, y, width, height, pixels) {
+			_x = x; _y = y; _width = width; _height = height; _pixels = pixels;						
+		});
+		client.receive(message('\0\0\0\1\0\0\0\0\0\2\0\2\0\0\0\0'));
+		client.receive(message('\1\1\1\1\1\1\1\1'));
+		client.receive(message('\1\1\1\1\1\1\1\1'));
+		client.receive(message('\0\0\0\1\0\0\0\0\0\2\0\2\0\0\0\0'));
+		client.receive(message('\2\2\2\2\2\2\2\2'));
+		client.receive(message('\2\2\2\2\2\2\2\2'));		
+		assert.equal(_x, 0);
+		assert.equal(_y, 0);
+		assert.equal(_width, 2);
+		assert.equal(_height, 2);
+		assert.equal(_pixels.length, 16);
+		assert.equal(_pixels.toString(), '\2\2\2\2\2\2\2\2\2\2\2\2\2\2\2\2');
+	}	
 }).run();
 
 
