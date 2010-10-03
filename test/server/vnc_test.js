@@ -1,4 +1,6 @@
-require.paths.unshift('../../lib', '../../lib/clair');
+var root = __dirname.substring(0, __dirname.length - 11);
+require.paths.unshift(root + 'lib', root + 'lib/clair');
+
 var sys = require('sys'), vnc = require('vnc.js');
 var vows = require('vows'), assert = require('assert');
 
@@ -59,12 +61,14 @@ vows.describe('Handshake').addBatch({
 		assert.equal(client._server.pixelFormat.redShift,     16);
 		assert.equal(client._server.pixelFormat.greenShift,    8);
 		assert.equal(client._server.pixelFormat.blueShift,     0);
+		assert.equal(client.initialized, true)
 	}
 }).run();
 
 vows.describe('Framebuffer Update').addBatch({
 	'should handle framebuffer update' : function() {
 		var client = afterHandshake(), _x, _y, _width, _height, _pixels;
+		client.enableClairEncoding = true;
 		client.on('rawEncoding', function(x, y, width, height, pixels) {
 			_x = x; _y = y; _width = width; _height = height; _pixels = pixels;						
 		});
@@ -80,6 +84,7 @@ vows.describe('Framebuffer Update').addBatch({
 	},
 	'should handle multi framebuffer updates' : function() {
 		var client = afterHandshake(), _x, _y, _width, _height, _pixels;
+		client.enableClairEncoding = true;
 		client.on('rawEncoding', function(x, y, width, height, pixels) {
 			_x = x; _y = y; _width = width; _height = height; _pixels = pixels;						
 		});

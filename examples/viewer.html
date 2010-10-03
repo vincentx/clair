@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title></title>
+<script src="scripts/jquery.js"></script>
+<script src="../lib/client/base64.js"></script>
+<script src="../lib/client/des.js"></script>
+<script src="../lib/client/canvas.js"></script>
+<script src="../lib/client/vnc.js"></script>
+</head>
+<body>
+<script>
+$(document).ready(function() {
+
+	var socket = new WebSocket("ws://localhost:8000/vnc?host=localhost&port=5900");
+	socket.onopen = function() { };
+	socket.onclose = function() {};
+	var client = createVncClient({socket : socket, password : 'p@55w0rd', always : 3.3, canvas : createCanvas(document.getElementById("vnc-viewer"))});
+});
+</script>
+
+<canvas id="vnc-viewer">	
+</canvas>  
+
+</body>
+</html>

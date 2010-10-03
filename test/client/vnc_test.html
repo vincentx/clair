@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>VNC Client Test</title>
+  <script src="./jsunit/app/jsUnitCore.js"></script>
+  <script src="../../lib/client/base64.js"></script>
+  <script src="../../lib/client/des.js"></script>
+  <script src="../../lib/client/vnc.js"></script>
+ </head>
+ <body>
+ <script>
+	var createSocket = function() {
+		var messageSent = new Array();
+		return { send : function(message) { messageSent.push(message);}, messages : function() { return messageSent;},
+			receive : function() { for(var i = 0; i< arguments.length; i++) this.onmessage({data:arguments[i]}); }};
+	}
+	
+	var createCanvas = function() {
+		var width, height;
+		return {
+			rectangles : [],
+			setSize : function(_width, _height) { width = _width; height = _height; }, width : function() { return width; }, height : function() { return height; },
+			drawRectangleFromPixels : function(x, y, width, height, pixels) {
+				this.rectangles.push({x: x, y: y, width: width, height: height, pixels : pixels});
+			}
+		}
+	}
+		
+	function toAscii(data) {
+		var ascii = [];
+		for (var i = 0; i < data.length; i++) ascii[i] = String.fromCharCode(data[i]);
+		return ascii.join('');
+	}
+	
+	function e(message) { return Base64.encode(message); }
+	
+	function testShouldHandshakingAndChooseProtocol() {
+		var protocolVersions = {
+			"RFB 003.003\n" : [3.3, "RFB 003.003\n"],
+			"RFB 003.005\n" : [3.3, "RFB 003.003\n"],
+			"RFB 003.007\n" : [3.7, "RFB 003.007\n"],
+			"RFB 003.008\n" : [3.8, "RFB 003.008\n"],
+			"RFB 003.899\n" : [3.8, "RFB 003.008\n"]
+		}		
+		for(var message in protocolVersions) {
+			var socket = createSocket();
+			var client = createVncClient({socket: socket});
+			socket.receive(e(message));
+			assertEquals(protocolVersions[message][1], socket.messages().pop());
+			assertEquals(protocolVersions[message][0], client.protocol.version);
+		}
+	}
+	
+	function testShouldAlwaysUseAVersonIfSpecified() {
+		var protocolVersions = {
+			"RFB 003.003\n" : [3.3, "RFB 003.003\n"],
+			"RFB 003.005\n" : [3.3, "RFB 003.003\n"],
+			"RFB 003.007\n" : [3.3, "RFB 003.003\n"],
+			"RFB 003.008\n" : [3.3, "RFB 003.003\n"],
+			"RFB 003.899\n" : [3.3, "RFB 003.003\n"]
+		}		
+		for(var message in protocolVersions) {
+			var socket = createSocket();
+			var client = createVncClient({socket: socket, password: 'password', always : 3.3});
+			socket.receive(e(message));
+			assertEquals(protocolVersions[message][1], socket.messages().pop());
+			assertEquals(protocolVersions[message][0], client.protocol.version);						
+		}		
+	}
+	
+	function testShouldWaitForChallengeIfSecurityIs2For33() {
+		var socket = createSocket(); createVncClient({socket: socket, password: 'password'});
+		socket.receive(e("RFB 003.003\n"), e([0, 0, 0, 2]), e([50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111]));
+		assertEquals(toAscii(DES.encrypt('password', [50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111])), socket.messages().pop());
+	}
+	
+	function testShouldSendClientInitIfAuthOk() {
+		var socket = createSocket();createVncClient({socket: socket, password: 'password'});
+		socket.receive(e("RFB 003.003\n"), e([0, 0, 0, 2]), e([50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111]), e([0, 0, 0, 0]));
+		assertEquals('\1', socket.messages().pop());		
+	}	
+	
+	function testShouldCallCanvasInitAccrodingToServerInit() {
+		var serverInitMessages = {			 
+			"BaADhCAgAAEA/wD/AP8QCAAAAAAAAAAYVmluY2VudCBYdSdzIE1hY0Jvb2sgUHJv" : {
+				width : 1440, height : 900, bitsPerPixel : 32, depth : 32,
+				bigEndian : false, trueColor : true, redMax : 255, greenMax : 255, blueMax : 255, redShift : 16, greenShift : 8, blueShift : 0,
+				name : "Vincent Xu's MacBook Pro"
+			},
+			"BQAEABAQAAEAHwA/AB8LBQAAAAAAAAAbaXAtMTAtMjI4LTEzOS0yMDoxICh1YnVudHUp" : {
+				width : 1280, height : 1024, bitsPerPixel : 16, depth : 16,
+				bigEndian : false, trueColor : true, redMax : 31, greenMax : 63, blueMax : 31, redShift : 11, greenShift : 5, blueShift : 0,
+				name : "ip-10-228-139-20:1 (ubuntu)"				
+			}
+		}				
+		for(var message in serverInitMessages) {
+			var socket = createSocket(), canvas = createCanvas(), client = createVncClient({socket: socket, password: 'password', canvas : canvas});
+			socket.receive(e("RFB 003.003\n"), e([0, 0, 0, 2]), e([50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111]), e([0, 0, 0, 0]), message);
+			assertEquals(serverInitMessages[message].name,   client.server.name);
+			assertEquals(serverInitMessages[message].width,  client.server.width);
+			assertEquals(serverInitMessages[message].height, client.server.height);
+			assertEquals(serverInitMessages[message].width,  canvas.width());
+			assertEquals(serverInitMessages[message].height, canvas.height());			
+			assertEquals(serverInitMessages[message].bitsPerPixel, client.server.pixelFormat.bitsPerPixel);
+			assertEquals(serverInitMessages[message].depth,        client.server.pixelFormat.depth);
+			assertEquals(serverInitMessages[message].bigEndian,    client.server.pixelFormat.bigEndian);
+			assertEquals(serverInitMessages[message].trueColor,    client.server.pixelFormat.trueColor);
+			assertEquals(serverInitMessages[message].redMax, client.server.pixelFormat.redMax);
+			assertEquals(serverInitMessages[message].greenMax, client.server.pixelFormat.greenMax);
+			assertEquals(serverInitMessages[message].blueMax, client.server.pixelFormat.blueMax);
+			assertEquals(serverInitMessages[message].redShift, client.server.pixelFormat.redShift);
+			assertEquals(serverInitMessages[message].greenShift, client.server.pixelFormat.greenShift);
+			assertEquals(serverInitMessages[message].blueShift, client.server.pixelFormat.blueShift);
+		}
+	}
+	
+	function testShouldSendSetEncodingsToServer() {
+		var encodings = {"\2\0\0\1\0\0\0\0" : [Encodings.Raw],  "\2\0\0\2\0\0\0\0\0\0\0\1": [Encodings.Raw, Encodings.CopyRect]};
+		for(var encoding in encodings) {
+			var socket = createSocket(), client = createVncClient({socket: socket, password: 'password'});
+			client.setEncodings(encodings[encoding]);
+			assertEquals(encoding, socket.messages().pop());			
+		}
+	}
+	
+	function testShouldHandleRawEncodingFramebuffer() {
+		var rawEncodings = {
+			"1 raw encoded buffer" : {
+				messages : [e([0,0,0,1, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0,0, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])],
+				results : [{x : 0, y : 0, width: 2, height: 2, pixels : [ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]}]
+			},
+			"1 raw encoded buffer in multi data messages" : {
+				messages : [e([0,0,0,1, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0,0]), e([1,1,1,1]), e([1,1,1,1,1,1]), e([1,1,1,1,1,1])],
+				results : [{x : 0, y : 0, width: 2, height: 2, pixels : [ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]}]
+			},
+			"1 raw encoded buffer in multi data messages with handover" : {
+				messages : [e([0,0,0,1, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0,0, 1,1,1,1]), e([1,1,1,1,1,1]), e([1,1,1,1,1,1])],
+				results : [{x : 0, y : 0, width: 2, height: 2, pixels : [ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]}]
+			},			
+			"2 raw encoded buffers" : {
+				messages : [e([0,0,0,1, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0,0, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]), e([0,0,0,1, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0,0, 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2])],
+				results : [{x : 0, y : 0, width: 2, height: 2, pixels : [ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]}, {x : 0, y : 0, width: 2, height: 2, pixels : [ 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]}]
+			}			
+		}
+		for (var test in rawEncodings) {
+			var encoding = rawEncodings[test];
+			var socket = createSocket(), canvas = createCanvas(), client = createVncClient({socket: socket, password: 'password', canvas : canvas});
+			socket.receive(e("RFB 003.003\n"), e([0, 0, 0, 2]), e([50,238,122,229,104,197,181,62,77,31,203,112,196,63,213,111]), e([0, 0, 0, 0]), "BaADhCAgAAEA/wD/AP8QCAAAAAAAAAAYVmluY2VudCBYdSdzIE1hY0Jvb2sgUHJv");
+			for (var i = 0; i < encoding.messages.length; i ++) socket.receive(encoding.messages[i]);
+			assertEquals(encoding.results.length, canvas.rectangles.length);
+			for (var i = 0; i < encoding.results.length; i ++) {
+				assertEquals(encoding.results[i].x, canvas.rectangles[i].x);
+				assertEquals(encoding.results[i].y, canvas.rectangles[i].y);
+				assertEquals(encoding.results[i].width, canvas.rectangles[i].width);
+				assertEquals(encoding.results[i].height, canvas.rectangles[i].height);				
+				assertEquals(encoding.results[i].pixels.join(':'), canvas.rectangles[i].pixels.join(':'));
+			}
+		}
+	}
+ </script>
+ </body>
+</html>
