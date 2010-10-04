@@ -2,26 +2,22 @@
 <html lang="en">
 <head>
 <title></title>
-<script src="scripts/jquery.js"></script>
 <script src="../lib/client/base64.js"></script>
 <script src="../lib/client/des.js"></script>
 <script src="../lib/client/canvas.js"></script>
 <script src="../lib/client/vnc.js"></script>
+<script src="scripts/jquery.js"></script>
+<script src="scripts/client.js"></script>
 </head>
 <body>
-<script>
-$(document).ready(function() {
-
-	var socket = new WebSocket("ws://localhost:8000/vnc?host=localhost&port=5900");
-	// var socket = new WebSocket("ws://localhost:8000/vnc?host=ec2-79-125-31-203.eu-west-1.compute.amazonaws.com&port=5901");
-	socket.onopen = function() { };
-	socket.onclose = function() {};
-	var client = createVncClient({socket : socket, password : 'p@55w0rd', always : 3.3, canvas : createCanvas(document.getElementById("vnc-viewer"))});
-});
-</script>
-
+<div id="server-panel">
+	<label for="host">Hostname : </label> <input id="host" type="text"/>
+	<label for="port">Port : </label> <input id="port" type="text"/>
+	<label for="password">Password : </label> <input id="password" type="password"/>
+	<button id="connect">Connect</button>
+	<button id="disconnect" style="display:none">Disconnect</button>
+</div>
 <canvas id="vnc-viewer">	
-</canvas>  
-
+</canvas>
 </body>
 </html>
