@@ -61,11 +61,11 @@ vows.describe('Handshake').addBatch({
 		assert.equal(client._server.pixelFormat.redShift,     16);
 		assert.equal(client._server.pixelFormat.greenShift,    8);
 		assert.equal(client._server.pixelFormat.blueShift,     0);
-		assert.equal(client.initialized, true)
+		assert.equal(client.initialized, true);
 	}
 }).run();
 
-vows.describe('Framebuffer Update').addBatch({
+vows.describe('Server to client message').addBatch({
 	'should handle framebuffer update' : function() {
 		var client = afterHandshake(), _x, _y, _width, _height, _pixels;
 		client.enableDataURI = true;
@@ -101,6 +101,29 @@ vows.describe('Framebuffer Update').addBatch({
 		assert.equal(_pixels.length, 16);
 		assert.equal(_pixels.toString(), '\2\2\2\2\2\2\2\2\2\2\2\2\2\2\2\2');
 	}	
+}).run();
+
+vows.describe('Client to server').addBatch({
+	'should enable DataURI if encodings contains' : function() {
+		var client = afterHandshake();
+		assert.equal(client.enableDataURI, false);
+		client.send('\2\0\0\2\0\0\0\0\0\0\37\163');
+		assert.equal(client.enableDataURI, true);
+	}, 
+	'should set pixel format' : function() {
+		var client = afterHandshake();		
+		client.send('\0\0\0\0\20\20\0\1\0\37\0\77\0\37\13\5\0\0\0\0');
+		assert.equal(client._server.pixelFormat.bitsPerPixel, 16);
+		assert.equal(client._server.pixelFormat.depth,        16);
+		assert.equal(client._server.pixelFormat.bigEndian, false);
+		assert.equal(client._server.pixelFormat.trueColor,  true);
+		assert.equal(client._server.pixelFormat.redMax,       31);
+		assert.equal(client._server.pixelFormat.greenMax,     63);
+		assert.equal(client._server.pixelFormat.blueMax,      31);
+		assert.equal(client._server.pixelFormat.redShift,     11);
+		assert.equal(client._server.pixelFormat.greenShift,    5);
+		assert.equal(client._server.pixelFormat.blueShift,     0);
+	}
 }).run();
 
 

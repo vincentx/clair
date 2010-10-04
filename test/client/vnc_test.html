@@ -80,7 +80,7 @@
 		assertEquals('\1', socket.messages().pop());		
 	}	
 	
-	function testShouldCallCanvasInitAccrodingToServerInit() {
+	function testShouldCallCanvasInitAccrodingToServerInitAndEnforePixelFormate() {
 		var serverInitMessages = {			 
 			"BaADhCAgAAEA/wD/AP8QCAAAAAAAAAAYVmluY2VudCBYdSdzIE1hY0Jvb2sgUHJv" : {
 				width : 1440, height : 900, bitsPerPixel : 32, depth : 32,
@@ -88,8 +88,8 @@
 				name : "Vincent Xu's MacBook Pro"
 			},
 			"BQAEABAQAAEAHwA/AB8LBQAAAAAAAAAbaXAtMTAtMjI4LTEzOS0yMDoxICh1YnVudHUp" : {
-				width : 1280, height : 1024, bitsPerPixel : 16, depth : 16,
-				bigEndian : false, trueColor : true, redMax : 31, greenMax : 63, blueMax : 31, redShift : 11, greenShift : 5, blueShift : 0,
+				width : 1280, height : 1024, bitsPerPixel : 32, depth : 24,
+				bigEndian : false, trueColor : true, redMax : 255, greenMax : 255, blueMax : 255, redShift : 16, greenShift : 8, blueShift : 0,
 				name : "ip-10-228-139-20:1 (ubuntu)"				
 			}
 		}				
@@ -115,7 +115,8 @@
 	}
 	
 	function testShouldSendSetEncodingsToServer() {
-		var encodings = {"\2\0\0\1\0\0\0\0" : [Encodings.Raw],  "\2\0\0\2\0\0\0\0\0\0\0\1": [Encodings.Raw, Encodings.CopyRect]};
+		var encodings = {"\2\0\0\1\0\0\0\0" : [Encodings.Raw],  "\2\0\0\2\0\0\0\0\0\0\0\1": [Encodings.Raw, Encodings.CopyRect],
+						 "\2\0\0\2\0\0\0\0\0\0\37\163" : [Encodings.Raw, Encodings.DataURI]};
 		for(var encoding in encodings) {
 			var socket = createSocket(), client = createVncClient({socket: socket, password: 'password'});
 			client.setEncodings(encodings[encoding]);
@@ -156,7 +157,7 @@
 				assertEquals(encoding.results[i].pixels.join(':'), canvas.rectangles[i].pixels.join(':'));
 			}
 		}
-	}
+	}	
  </script>
  </body>
 </html>
