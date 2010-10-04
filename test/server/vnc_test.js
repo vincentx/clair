@@ -68,7 +68,7 @@ vows.describe('Handshake').addBatch({
 vows.describe('Framebuffer Update').addBatch({
 	'should handle framebuffer update' : function() {
 		var client = afterHandshake(), _x, _y, _width, _height, _pixels;
-		client.enableClairEncoding = true;
+		client.enableDataURI = true;
 		client.on('rawEncoding', function(x, y, width, height, pixels) {
 			_x = x; _y = y; _width = width; _height = height; _pixels = pixels;						
 		});
@@ -84,7 +84,7 @@ vows.describe('Framebuffer Update').addBatch({
 	},
 	'should handle multi framebuffer updates' : function() {
 		var client = afterHandshake(), _x, _y, _width, _height, _pixels;
-		client.enableClairEncoding = true;
+		client.enableDataURI = true;
 		client.on('rawEncoding', function(x, y, width, height, pixels) {
 			_x = x; _y = y; _width = width; _height = height; _pixels = pixels;						
 		});
